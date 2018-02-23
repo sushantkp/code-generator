@@ -11,13 +11,28 @@ else
 	cname="${iname}Impl"
 fi
 cfname="$cname.java"
-create-class.sh $cname $iname
 
-remove-last-line.sh $cname 
+> "$cfname"
+classTemp="/**
+ * <p>
+ */
+public class $cname implements $iname {      
+	/**
+     * Default constructor
+	 */
+    public $cname() {
+    	
+    }"
+
+echo "$classTemp" > "$cfname"  
+echo "Created class $cname implementing interface $iname"
+
 
 # Add hamcrest imports
-echo "import static org.hamcrest.MatcherAssert.assertThat;" >> temp
-echo "import static org.hamcrest.Matchers.*;" >> temp
+if [ ! -z $TEST_FRAMEWORK ]; then
+	echo "import static org.hamcrest.MatcherAssert.assertThat;" >> temp
+	echo "import static org.hamcrest.Matchers.*;" >> temp
+fi
 
 # Add imports from Interface
 cat $fname | grep ^import | \
@@ -33,15 +48,15 @@ cat $cfname >> temp && mv temp $cfname
 cat $fname | grep public | grep -v interface | \
 while read line
             do 
-                echo                               >> $cfname
+                echo >> $cfname
                 echo "    @Override" >> $cfname
                 echo "    ${line::${#line} - 1} {" >> $cfname
                 if [ "$(echo $line | awk '{print $2}')" == 'void' ]; then
-                    echo "    "                        >> $cfname
+                    echo "    " >> $cfname
                 else
-                    echo "        return null;"            >> $cfname
+                    echo "        return null;" >> $cfname
                 fi
-                echo "    }"                       >> $cfname
+                echo "    }" >> $cfname
             done
 
     
@@ -73,3 +88,4 @@ while read line
             done
 
 echo "}" >> $cfname
+clean-imports.sh $cname

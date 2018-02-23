@@ -7,6 +7,7 @@ ctvarname=$(lower-camel-case.sh $ctname)
 
 create-class.sh $ctname
 remove-last-line.sh $ctname
+echo >> $ctfname
 
 in_main_body=false
 end_main=false
@@ -44,4 +45,4 @@ save-last-copy.sh $ctfname
 echo >> temp2-import
 cat temp2-import | cat - $ctfname | cat - temp-main | cat - temp2 > temp && mv temp $ctfname && rm temp2-import && rm temp2 && rm temp-main
 #cat temp2 >> $ctfname && rm temp2
-
+clean-imports.sh $ctname

@@ -16,6 +16,16 @@ gen_getter() {
     echo "    }"
 }
 
+gen_builder_methods() {
+    attrib=$1
+    type=$2
+    echo 
+    echo "        public ${cname}.Builder ${attrib}($type ${attrib}In) {"
+    echo "            this.$attrib = ${attrib}In;"
+    echo "            return this;"
+    echo "        }"
+}
+
 gen_setter() {
     attrib=$1
     type=$2
@@ -70,6 +80,7 @@ do
         echo "    $access $type $varname;" >> temp-attrib-def
     fi
     gen_getter $varname $type >> temp-getter
+    gen_builder_methods $varname $type >> temp-builder-methods
     [[ $immutable == false ]] && gen_setter $varname $type >> temp-setter
 
     [[ $first == false ]] && constr_param="${constr_param}, "
@@ -77,7 +88,7 @@ do
     echo "        this.${varname} = ${varname}In;" >> constr-body
 
     if [[ $type == 'String' ]];then
-        tostring_append="append(\"$varname=\\\'\").append(this.${varname}).append('\\\\\'');"
+        tostring_append="append(\"$varname=\\\'\").append(this.${varname}).append(\"\\\'\");"
     else
         tostring_append="append(\"$varname=\").append(this.${varname});"
     fi
@@ -128,11 +139,29 @@ imports=$(cat temp-imports | grep -v "^import java\." | grep -v "^import org" | 
 echo "public class $cname {" >> $cfname
 cat temp-attrib-def >> $cfname
 echo >> $cfname
-echo "    public $cname(${constr_param}) {" >> $cfname
-cat constr-body >> $cfname
+[[ "$immutable" == true ]] && echo "    public static class Builder {" >> $cfname
+[[ "$immutable" == true ]] && cat temp-attrib-def | awk '{print "        "$1" "$3" "$4}' >> $cfname
+[[ "$immutable" == true ]] && echo "
+        public Builder() {
+        }" >> $cfname
+[[ "$immutable" == true ]] && cat temp-builder-methods >> $cfname
+[[ "$immutable" == true ]] && echo "
+        public $cname build() {
+            return new Person(this);
+		}
+    }
+" >> $cfname
+ 
+if [[ "$immutable" == false ]]; then
+	echo "    public $cname(${constr_param}) {" >> $cfname
+	cat constr-body >> $cfname
+else 
+	echo "    private $cname(${cname}.Builder builder) {" >> $cfname
+	cat temp-attrib-def | awk '{print "        this."substr($4, 0, (length($4) - 1))" = builder."$4}' >> $cfname
+fi
 echo "    }" >> $cfname
 cat temp-getter >> $cfname
-[[ $immutable == false ]] && cat temp-setter >> $cfname
+[[ "$immutable" == false ]] && cat temp-setter >> $cfname
 
 echo >> $cfname
 echo "    @Override" >> $cfname
@@ -168,5 +197,6 @@ echo "}" >> $cfname
 
 rm temp-attrib-def temp-getter constr-body temp-tostring-body temp-equals-body temp-imports
 [[ -f temp-setter ]] && rm temp-setter
+[[ -f temp-builder-methods ]] && rm temp-builder-methods
 
 exit 0

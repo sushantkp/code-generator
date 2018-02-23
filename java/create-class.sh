@@ -1,9 +1,18 @@
+#!/bin/sh
 # create-class.sh Myclass MyInterface
 className=$1
-interface=$2
-[[ ! -z $interface ]] && implInterfaceTemp="implements ${interface} "
-classTemp="public class $className $implInterfaceTemp{
-    // Default constructor
+class_descr=$2
+classTemp="/**
+ *<p>$class_descr
+ *
+ * @author $USER
+ * @version 1.0
+ */
+public class $className {
+	
+	/**
+     * Default constructor
+	 */
     public $className() {
 
     }

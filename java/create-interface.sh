@@ -1,5 +1,9 @@
 interfaceName=$1
-interfaceTemp="public interface $interfaceName {
+interface_descr=$2
+interfaceTemp="/**
+ * <p>$interface_descr
+ */
+public interface $interfaceName {
 }"
 
 echo "$interfaceTemp" > "$interfaceName.java"
