@@ -11,7 +11,7 @@ imports=${@:2}
 for import in $imports
 do
 	importTemplate="import $import;"
-	echo "adding $importTemplate"
+	echo "adding $importTemplate" | sed 's/.$//'
 	echo $importTemplate >> $temp
 	#echo $importTemplate | cat - $fname > temp && mv temp $fname
 done 
