@@ -19,8 +19,9 @@ LIBDIR=.lib
 #rm temp
 #
 mkdir -p .classes
-classpath=".:$(ls -1 .lib | grep ".jar$" | sed 's/^/.lib\//g')" #clean jar file path
+jars="$(ls -1 .lib | grep ".jar$" | sed 's/^/.lib\//g')" #clean jar file path
 if (( $(echo $classpath | wc -l) > 1 ));  then
-	classpath="$(echo $classpath | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/:/g')" # compact multiple lines to one
+	jars="$(echo $jars | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/:/g')" # compact multiple lines to one
 fi
+classpath=".:$jars" #clean jar file path
 /usr/bin/javac -cp $classpath -g -d .classes $@
