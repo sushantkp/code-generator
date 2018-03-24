@@ -1,3 +1,5 @@
+#!/bin/sh
+
 cname=$1
 fname="${cname}.java"
 

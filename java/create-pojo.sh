@@ -1,11 +1,25 @@
+#!/bin/sh
+
+SCRIPT_DIR=$(dirname $0)
+. $SCRIPT_DIR/../common/common-functions.sh
+. $SCRIPT_DIR/../java/common-java-functions.sh
+
 #
-# usage:  create-pojo.sh <options-literal> Pi String:name int:brown java.util.Queue boolean:activate:protected
+# usage:  create-pojo.sh Pi <options-literal> String:name int:brown java.util.Queue boolean:activate:protected
 # options-literal: ie    (immutable with equals and hashcode)
 #    i: immutable
 #    m: mutable
 #    e: equals and hashcode
 #    s: static builder   
 
+temp_attrib_def=$(get_temp_file temp_attrib_def)
+temp_builder_methods=$(get_temp_file temp_builder_methods)
+temp_equals_body=$(get_temp_file temp_equals_body)
+temp_getter=$(get_temp_file temp_getter)
+temp_imports=$(get_temp_file temp_imports)
+temp_setter=$(get_temp_file temp_setter)
+temp_tostring_body=$(get_temp_file temp_tostring_body)
+temp_constr_body=$(get_temp_file temp_constr_body)
 
 gen_getter() {
     attrib=$1
@@ -52,7 +66,7 @@ attribs=${@:3}
 first=true
 
 # Used for creating equals
-[[ $generate_equals_hashcode == true ]] && echo "import java.util.Objects;" >> temp-imports  
+[[ $generate_equals_hashcode == true ]] && echo "import java.util.Objects;" >> $temp_imports  
 
 for attrib in $attribs
 do
@@ -61,7 +75,7 @@ do
     attrib=(${attrib//:/ })
     type=$(echo ${attrib[0]} | sed -E -e  's/.*\.//')
     [[ ! -z $(echo ${attrib[0]} | grep \\.) ]] && \
-        echo "import ${attrib[0]};" >> temp-imports
+        echo "import ${attrib[0]};" >> $temp_imports
 
     if [[ ! -z ${attrib[1]} ]]; then
         varname="${attrib[1]}"
@@ -75,17 +89,17 @@ do
     fi
 
     if [[ $immutable = true ]]; then
-        echo "    $access final $type $varname;" >> temp-attrib-def
+        echo "    $access final $type $varname;" >> $temp_attrib_def
     else
-        echo "    $access $type $varname;" >> temp-attrib-def
+        echo "    $access $type $varname;" >> $temp_attrib_def
     fi
-    gen_getter $varname $type >> temp-getter
-    gen_builder_methods $varname $type >> temp-builder-methods
-    [[ $immutable == false ]] && gen_setter $varname $type >> temp-setter
+    gen_getter $varname $type >> $temp_getter
+    gen_builder_methods $varname $type >> $temp_builder_methods
+    [[ $immutable == false ]] && gen_setter $varname $type >> $temp_setter
 
     [[ $first == false ]] && constr_param="${constr_param}, "
     constr_param="${constr_param}$type ${varname}In"
-    echo "        this.${varname} = ${varname}In;" >> constr-body
+    echo "        this.${varname} = ${varname}In;" >> $temp_constr_body
 
     if [[ $type == 'String' ]];then
         tostring_append="append(\"$varname=\\\'\").append(this.${varname}).append(\"\\\'\");"
@@ -93,10 +107,10 @@ do
         tostring_append="append(\"$varname=\").append(this.${varname});"
     fi
     if [[ $first == false ]]; then 
-        #echo "        sb.append(\", \").append(\"$varname=\").append(this.${varname});" >> temp-tostring-body
-        echo "        sb.append(\", \").$tostring_append" >> temp-tostring-body
+        #echo "        sb.append(\", \").append(\"$varname=\").append(this.${varname});" >> $temp_tostring_body
+        echo "        sb.append(\", \").$tostring_append" >> $temp_tostring_body
     else
-        echo "        sb.$tostring_append" >> temp-tostring-body
+        echo "        sb.$tostring_append" >> $temp_tostring_body
     fi
 
     # Generate equals body
@@ -108,10 +122,10 @@ do
 	fi
      
     if [[ $first == false ]]; then 
-        echo " &&" >> temp-equals-body
-        printf "            $equals_comparison" >> temp-equals-body
+        echo " &&" >> $temp_equals_body
+        printf "            $equals_comparison" >> $temp_equals_body
     else 
-        printf "        return $equals_comparison" >> temp-equals-body
+        printf "        return $equals_comparison" >> $temp_equals_body
     fi
 
     # generate hashcode body
@@ -124,27 +138,29 @@ do
     first=false
 done
 
-imports=$(cat temp-imports | grep "^import java\." | sort | uniq)
+# TODO use clean-imports instead
+
+imports=$(cat $temp_imports | grep "^import java\." | sort | uniq)
 echo "$imports" >> $cfname
 [[ ! -z $imports ]] && echo >> $cfname
-imports=$(cat temp-imports | grep "^import javax\." | sort | uniq)
+imports=$(cat $temp_imports | grep "^import javax\." | sort | uniq)
 [[ ! -z $imports ]] && echo "$imports" >> $cfname && echo >> $cfname
-imports=$(cat temp-imports | grep "^import org\." | sort | uniq)
+imports=$(cat $temp_imports | grep "^import org\." | sort | uniq)
 [[ ! -z $imports ]] && echo "$imports" >> $cfname && echo >> $cfname
-imports=$(cat temp-imports | grep "^import com\." | sort | uniq)
+imports=$(cat $temp_imports | grep "^import com\." | sort | uniq)
 [[ ! -z $imports ]] && echo "$imports" >> $cfname && echo >> $cfname
-imports=$(cat temp-imports | grep -v "^import java\." | grep -v "^import org" | grep -v "^import com" | sort | uniq)
+imports=$(cat $temp_imports | grep -v "^import java\." | grep -v "^import org" | grep -v "^import com" | sort | uniq)
 [[ ! -z $imports ]] && echo "$imports" >> $cfname && echo >> $cfname
 
 echo "public class $cname {" >> $cfname
-cat temp-attrib-def >> $cfname
+cat $temp_attrib_def >> $cfname
 echo >> $cfname
 [[ "$immutable" == true ]] && echo "    public static class Builder {" >> $cfname
-[[ "$immutable" == true ]] && cat temp-attrib-def | awk '{print "        "$1" "$3" "$4}' >> $cfname
+[[ "$immutable" == true ]] && cat $temp_attrib_def | awk '{print "        "$1" "$3" "$4}' >> $cfname
 [[ "$immutable" == true ]] && echo "
         public Builder() {
         }" >> $cfname
-[[ "$immutable" == true ]] && cat temp-builder-methods >> $cfname
+[[ "$immutable" == true ]] && cat $temp_builder_methods >> $cfname
 [[ "$immutable" == true ]] && echo "
         public $cname build() {
             return new Person(this);
@@ -154,20 +170,20 @@ echo >> $cfname
  
 if [[ "$immutable" == false ]]; then
 	echo "    public $cname(${constr_param}) {" >> $cfname
-	cat constr-body >> $cfname
+	cat $temp_constr_body >> $cfname
 else 
 	echo "    private $cname(${cname}.Builder builder) {" >> $cfname
-	cat temp-attrib-def | awk '{print "        this."substr($4, 0, (length($4) - 1))" = builder."$4}' >> $cfname
+	cat $temp_attrib_def | awk '{print "        this."substr($4, 0, (length($4) - 1))" = builder."$4}' >> $cfname
 fi
 echo "    }" >> $cfname
-cat temp-getter >> $cfname
-[[ "$immutable" == false ]] && cat temp-setter >> $cfname
+cat $temp_getter >> $cfname
+[[ "$immutable" == false ]] && cat $temp_setter >> $cfname
 
 echo >> $cfname
 echo "    @Override" >> $cfname
 echo "    public String toString() {" >> $cfname
 echo "        final StringBuilder sb = new StringBuilder(\"$cname{\");" >> $cfname
-cat temp-tostring-body >> $cfname
+cat $temp_tostring_body >> $cfname
 echo "        sb.append('}');" >> $cfname
 echo "        return sb.toString();" >> $cfname
 echo "    }" >> $cfname
@@ -179,7 +195,7 @@ echo "    public boolean equals(Object o) {" >> $cfname
 echo "        if (this == o) return true;" >> $cfname
 echo "        if (o == null || getClass() != o.getClass()) return false;" >> $cfname
 echo "        $cname $cnamevar = ($cname) o;" >> $cfname
-cat temp-equals-body >> $cfname
+cat $temp_equals_body >> $cfname
 echo ";" >> $cfname
 echo "    }" >> $cfname
 
@@ -195,8 +211,8 @@ echo "}" >> $cfname
 
 
 
-rm temp-attrib-def temp-getter constr-body temp-tostring-body temp-equals-body temp-imports
-[[ -f temp-setter ]] && rm temp-setter
-[[ -f temp-builder-methods ]] && rm temp-builder-methods
+rm $temp_attrib_def $temp_getter $temp_constr_body $temp_tostring_body $temp_equals_body $temp_imports
+[[ -f $temp_setter ]] && rm $temp_setter
+[[ -f $temp_builder_methods ]] && rm $temp_builder_methods
 
 exit 0

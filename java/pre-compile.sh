@@ -13,6 +13,8 @@ cfname=$1
 file_updated=$(get_temp_file)
 rm $file_updated
 
+temp=$(get_temp_file tmpfile)
+
 IFS=''
 cat $cfname | \
     while read line
@@ -29,13 +31,13 @@ cat $cfname | \
 #                -e 's/\/\/sop //' -e 's/([^\|]+)\|/"\1" + /g' \
 #                -e 's/([^ ]+$)/"&"\);/' -e 's/"@@([^"]+)"/\1/g')
             space=$(echo $line | sed -E -e  's/(^[ \t]*)(.*)/\1/')
-        	printf "${space}System.out.println(${params});" >> temp
-            echo >> temp
+        	printf "${space}System.out.println(${params});" >> $temp
+            echo >> $temp
 			> $file_updated
         else
-            echo "$line" >> temp
+            echo "$line" >> $temp
         fi
     done
 
-[[ -f $file_updated ]] && save-last-copy.sh $cfname && mv temp $cfname
-[[ -f temp ]] && rm temp
+[[ -f $file_updated ]] && save-last-copy.sh $cfname && mv $temp $cfname
+[[ -f $temp ]] && rm $temp

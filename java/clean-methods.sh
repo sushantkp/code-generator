@@ -1,6 +1,5 @@
 #!/bin/sh
 
-
 BaseDir=$(dirname $0)
 # import common functions
 . $BaseDir/../common/common-functions.sh

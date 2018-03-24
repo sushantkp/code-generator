@@ -1,3 +1,5 @@
+#!/bin/sh
+
 interfaceName=$1
 interface_descr=$2
 interfaceTemp="/**

@@ -1,6 +1,11 @@
+#!/bin/sh
 #
 # Usage: implement-interface.sh <interface-name> <impl-class-name>
 #
+
+SCRIPT_DIR=$(dirname $0)
+. $SCRIPT_DIR/../common/common-functions.sh
+. $SCRIPT_DIR/../java/common-java-functions.sh
 
 iname=$1
 fname="$iname.java"
@@ -27,21 +32,22 @@ public class $cname implements $iname {
 echo "$classTemp" > "$cfname"  
 echo "Created class $cname implementing interface $iname"
 
+temp=$(create_temp_file temp)
 
 # Add hamcrest imports
 if [ ! -z $TEST_FRAMEWORK ]; then
-	echo "import static org.hamcrest.MatcherAssert.assertThat;" >> temp
-	echo "import static org.hamcrest.Matchers.*;" >> temp
+	echo "import static org.hamcrest.MatcherAssert.assertThat;" >> $temp
+	echo "import static org.hamcrest.Matchers.*;" >> $temp
 fi
 
 # Add imports from Interface
 cat $fname | grep ^import | \
     while read line
     do 
-        echo $line >> temp
+        echo $line >> $temp
     done
-echo >> temp
-cat $cfname >> temp && mv temp $cfname
+echo >> $temp
+cat $cfname >> $temp && mv $temp $cfname
 
 
 # Add methods

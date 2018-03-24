@@ -1,6 +1,12 @@
-LIBDIR=.lib
+#! /bin/sh
+
+SCRIPT_DIR=$(dirname $0)
+. $SCRIPT_DIR/../common/common-functions.sh
+. $SCRIPT_DIR/../java/common-java-functions.sh
+
+LIBDIR=$(get_lib_dir)
 # check and get required jar files                   
-[[ ! -f .lib/junit-platform-console-standalone-1.0.2.jar ]] && \                 
+[[ ! -f ${LIBDIR}/junit-platform-console-standalone-1.0.2.jar ]] && \                 
     add-jar.sh https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.0.2/junit-platform-console-standalone-1.0.2.jar    
 
 first=true

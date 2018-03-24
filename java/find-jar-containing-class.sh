@@ -1,3 +1,9 @@
+#!/bin/sh
+
+#
+# Usage: find-jar-containing-class.sh <class_name> <jar1> <jar2>
+#
+
 classname=$1
 jar_names=${@:2}
 

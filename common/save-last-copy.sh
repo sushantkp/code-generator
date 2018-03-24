@@ -1,5 +1,9 @@
+#!/bin/sh
+
+BaseDir=$(dirname $0)
+# import common functions
+. $BaseDir/../common/common-functions.sh
+
 file=$1
-BASEDIR=.
-archive_dir=${BASEDIR}/.last/
-mkdir -p $archive_dir
-cp $file $archive_dir
+archive_dir=$(get_last_dir)
+cp $file ${archive_dir}/${file}.backup

@@ -1,5 +1,11 @@
-LIBDIR=.lib
-CLASSESDIR=.classes
+#! /bin/sh
+
+SCRIPT_DIR=$(dirname $0)
+. $SCRIPT_DIR/../common/common-functions.sh
+. $SCRIPT_DIR/../java/common-java-functions.sh
+
+LIBDIR=$LIBDIR
+CLASSESDIR=$(get_classes_dir)
 #printf "." >> temp
 #if [ -d $LIBDIR ]; then
 #    ls $LIBDIR |\
@@ -10,7 +16,7 @@ CLASSESDIR=.classes
 #fi
 #classpath=$(cat temp)
 ##echo $classpath
-jars="$(ls -1 .lib | grep ".jar$" | sed 's/^/.lib\//g')" #clean jar file path
+jars="$(ls -1 $LIBDIR | grep ".jar$" | sed 's/^/$LIBDIR\//g')" #clean jar file path
 if (( $(echo $classpath | wc -l) > 1 ));  then
 	jars="$(echo $jars | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/:/g')" # compact multiple lines to one
 fi

@@ -28,11 +28,29 @@ function capitalize() {
 }
 
 function get_temp_file() {
-    
-    BaseTemp="."
-    fpath=$BaseTemp/.codegen
+    BaseTemp="/Volumes/mtmpdir"
+	twodirlevel=$(pwd | awk -F/ '{print $(NF-1)"/"$NF}')
+    fpath=$BaseTemp/codegen/${twodirlevel}/temp
     mkdir -p $fpath
     file_suffix="$(basename $0)"
 	[[ ! -z $1 ]] && file_suffix="${file_suffix}.$1"
     echo $(mktemp ${fpath}/${file_suffix}.XXXXXX)
+}
+
+function get_temp_dir() {
+    BaseTemp="/Volumes/mtmpdir"
+	twodirlevel=$(pwd | awk -F/ '{print $(NF-1)"/"$NF}')
+    fpath=$BaseTemp/codegen/${twodirlevel}
+	[[ ! -z $1 ]] && fpath="${fpath}/$1"
+    mkdir -p $fpath
+    echo $(mktemp -d ${fpath}/XXXXXX)
+}
+
+# store a backup of source file being updated
+function get_last_dir() {
+    BaseTemp="/Volumes/mtmpdir"
+	twodirlevel=$(pwd | awk -F/ '{print $(NF-1)"/"$NF}')
+    fpath=$BaseTemp/codegen/${twodirlevel}/last
+    mkdir -p $fpath
+    echo $fpath
 }
